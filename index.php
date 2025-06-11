@@ -94,4 +94,9 @@ if ($chat_id && $text) {
         sendMessage($chat_id, "تم طرد المستخدم.");
     }
 }
+            // في حالة الوصول للصفحة مباشرة (بدون webhook)
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    echo "بوت تلجرام يعمل بنجاح.";
+    exit;
+}
 ?>
