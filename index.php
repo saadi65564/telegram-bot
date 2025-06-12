@@ -7,6 +7,9 @@ $update = json_decode(file_get_contents('php://input'), TRUE);
 $chat_id = $update['message']['chat']['id'] ?? null;
 $user_id = $update['message']['from']['id'] ?? null;
 $text = $update['message']['text'] ?? '';
+$first_name = $update['message']['from']['first_name'] ?? '';
+$username = $update['message']['from']['username'] ?? '';
+$mention = $username ? "@$username" : $first_name;
 
 // دالة إرسال رسالة
 function sendMessage($chat_id, $text) {
@@ -44,16 +47,32 @@ function deleteMessage($chat_id, $message_id) {
     return $output;
 }
 
-// دالة طرد عضو من المجموعة
-function kickMember($chat_id, $user_id) {
+// دالة كتم عضو في المجموعة لمدة 30 يوم
+function muteMember($chat_id, $user_id) {
     global $TOKEN;
-    $url = "https://api.telegram.org/bot".$TOKEN."/kickChatMember";
+    $url = "https://api.telegram.org/bot".$TOKEN."/restrictChatMember";
+    
+    $until_date = time() + (30 * 24 * 60 * 60); // 30 يوم
+
+    $permissions = [
+        'can_send_messages' => false,
+        'can_send_media_messages' => false,
+        'can_send_polls' => false,
+        'can_send_other_messages' => false,
+        'can_add_web_page_previews' => false,
+        'can_change_info' => false,
+        'can_invite_users' => false,
+        'can_pin_messages' => false
+    ];
+
     $post_fields = [
         'chat_id' => $chat_id,
-        'user_id' => $user_id
+        'user_id' => $user_id,
+        'permissions' => json_encode($permissions),
+        'until_date' => $until_date
     ];
+
     $ch = curl_init(); 
-    curl_setopt($ch, CURLOPT_HTTPHEADER, array("Content-Type:multipart/form-data"));
     curl_setopt($ch, CURLOPT_URL, $url); 
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1); 
     curl_setopt($ch, CURLOPT_POSTFIELDS, $post_fields); 
@@ -73,7 +92,10 @@ if ($chat_id && $text) {
         if (strpos($text_lower, $keyword) !== false) {
             $message_id = $update['message']['message_id'];
             deleteMessage($chat_id, $message_id);
-            sendMessage($chat_id, "تم حذف إعلان غير مسموح به.");
+            muteMember($chat_id, $user_id);
+            $reason = "نشر إعلان مخالف يحتوي على كلمات محظورة.";
+            $punishment = "تم كتم المستخدم لمدة 30 يومًا.";
+            sendMessage($chat_id, "🚫 المستخدم $mention\n📌 السبب: $reason\n⏳ العقوبة: $punishment");
             exit;
         }
     }
@@ -112,10 +134,10 @@ if ($chat_id && $text) {
         sendMessage($chat_id, $response);
     }
 
-    // أمر طرد
+    // أمر /kick يقوم بكتم العضو
     if ($text_lower == '/kick') {
-        kickMember($chat_id, $user_id);
-        sendMessage($chat_id, "تم طرد المستخدم.");
+        muteMember($chat_id, $user_id);
+        sendMessage($chat_id, "🚫 المستخدم $mention\n📌 السبب: أمر إداري /kick\n⏳ العقوبة: كتم لمدة 30 يومًا.");
     }
 }
 
