@@ -82,7 +82,7 @@ function muteMember($chat_id, $user_id) {
 }
 
 // الكلمات الإعلانية للحذف
-$ads_keywords = ['شراء', 'رابط', 'مجاناً', 'خصم', 'كود', 'subscribe', 'http', 'www'];
+$ads_keywords = ['نوفر', 'تواصل معي ', 'للتواصل:', 'شركة استثمار ', 'نحل واجبات','@', 'subscribe', 'http', 'www'];
 
 if ($chat_id && $text) {
     $text_lower = mb_strtolower($text);
