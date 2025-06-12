@@ -79,7 +79,7 @@ if ($chat_id && $text) {
     }
 
     // الرد على "مرحبا"
-    if (strpos($text_lower, 'hi') !== false) {
+    if (strpos($text_lower, 'مرحبا') !== false) {
         sendMessage($chat_id, "أهلاً وسهلاً بك في المجموعة!");
     }
 
