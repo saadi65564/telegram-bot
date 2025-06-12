@@ -11,6 +11,21 @@ $first_name = $update['message']['from']['first_name'] ?? '';
 $username = $update['message']['from']['username'] ?? '';
 $mention = $username ? "@$username" : $first_name;
 
+
+function isAdminOrOwner($chat_id, $user_id) {
+    global $TOKEN;
+    $url = "https://api.telegram.org/bot$TOKEN/getChatMember?chat_id=$chat_id&user_id=$user_id";
+    $response = file_get_contents($url);
+    $data = json_decode($response, true);
+    
+    if ($data && isset($data['result']['status'])) {
+        $status = $data['result']['status'];
+        return in_array($status, ['administrator', 'creator']);
+    }
+
+    return false;
+}
+
 // دالة إرسال رسالة
 function sendMessage($chat_id, $text) {
     global $TOKEN;
@@ -81,25 +96,32 @@ function muteMember($chat_id, $user_id) {
     return $output;
 }
 
+
 // الكلمات الإعلانية للحذف
 $ads_keywords = ['نوفر', 'تواصل معي ', 'للتواصل:', 'شركة استثمار ', 'نحل واجبات','@', 'subscribe', 'http', 'www'];
 
 if ($chat_id && $text) {
     $text_lower = mb_strtolower($text);
 
-    // حذف الرسائل التي تحتوي على كلمات إعلانية
-    foreach ($ads_keywords as $keyword) {
-        if (strpos($text_lower, $keyword) !== false) {
-            $message_id = $update['message']['message_id'];
-            deleteMessage($chat_id, $message_id);
-            muteMember($chat_id, $user_id);
-            $reason = "نشر إعلان مخالف يحتوي على كلمات محظورة.";
-            $punishment = "تم كتم المستخدم لمدة 30 يومًا.";
-            sendMessage($chat_id, "🚫 المستخدم $mention\n📌 السبب: $reason\n⏳ العقوبة: $punishment");
-            exit;
-        }
-    }
+foreach ($ads_keywords as $keyword) {
+    if (strpos($text_lower, $keyword) !== false) {
 
+        // لا تحذف أو تكتم إذا كان المستخدم مشرف أو مالك
+        if (isAdminOrOwner($chat_id, $user_id)) {
+            break;
+        }
+
+        $message_id = $update['message']['message_id'];
+        deleteMessage($chat_id, $message_id);
+        muteMember($chat_id, $user_id);
+        $reason = "نشر إعلان مخالف يحتوي على كلمات محظورة.";
+        $punishment = "تم كتم المستخدم لمدة 30 يومًا.";
+        sendMessage($chat_id, "🚫 المستخدم $mention\n📌 السبب: $reason\n⏳ العقوبة: $punishment");
+        exit;
+    }
+}
+
+  
     // الرد على "مرحبا"
     if (strpos($text_lower, 'مرحبا') !== false) {
         sendMessage($chat_id, "أهلاً وسهلاً بك في المجموعة!");
