@@ -122,36 +122,6 @@ foreach ($ads_keywords as $keyword) {
 }
 
   
-function sendMuteMessageWithButton($chat_id, $target_user_id, $mention, $reason) {
-    global $TOKEN;
-
-    $keyboard = [
-        'inline_keyboard' => [
-            [
-                ['text' => '🚨 إلغاء الكتم', 'callback_data' => "unmute:$chat_id:$target_user_id"]
-            ]
-        ]
-    ];
-
-    $text = "🚫 المستخدم $mention\n📌 السبب: $reason\n⏳ العقوبة: كتم لمدة 30 يومًا.";
-
-    $post_fields = [
-        'chat_id' => $chat_id,
-        'text' => $text,
-        'parse_mode' => 'HTML',
-        'reply_markup' => json_encode($keyboard)
-    ];
-
-    $url = "https://api.telegram.org/bot$TOKEN/sendMessage";
-    $ch = curl_init(); 
-    curl_setopt($ch, CURLOPT_URL, $url); 
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1); 
-    curl_setopt($ch, CURLOPT_POSTFIELDS, $post_fields); 
-    curl_exec($ch);
-    curl_close($ch);
-}
-
-
    // ✅ الترحيب بمن ينضم للمجموعة
 if (isset($update['message']['new_chat_members'])) {
     foreach ($update['message']['new_chat_members'] as $new_member) {
@@ -207,35 +177,7 @@ foreach ($acceptance_keywords as $keyword) {
     }
 }
 
-    // الرد على "مكتب قبول"
-//     if (strpos($text_lower, 'مكتب قبول') !== false) {
-//         $response = "نُقدم قبولات جامعية ودورات لغة إنجليزية <b>مجانًا</b> من جامعات ومعاهد معتمدة من وزارات التعليم في الدول العربية، ولجميع المراحل الأكاديمية:
-        
-// • اللغة الإنجليزية  
-// • البكالوريوس  
-// • الماجستير  
-// • الدكتوراه  
-// • البرامج الصيفية  
-// • الدورات التدريبية  
-
-// كما نوفر:  
-// • سكن للطلاب (مع عائلات بريطانية أو في سكن طلابي خاص)  
-// • استقبال وتوصيل من وإلى جميع مطارات بريطانيا  
-// • متابعة أكاديمية دورية مع تقارير مخصصة لأولياء الأمور (حسب عمر الطالب)  
-
-// 📌 فرصتك للدراسة في بريطانيا تبدأ معنا!  
-// 📲 تواصل معنا الآن عبر الواتساب، ولا تنسَ مشاركة هذا الإعلان مع من تحب ليستفيد الجميع.  
-
-// 📞 واتساب وهاتف: +447772354489  
-// 📧 البريد الإلكتروني: info@be-tc.co.uk  
-// 🌐 الموقع الإلكتروني: www.be-tc.co.uk  
-
-// <b>British E-Training Centre LTD</b>  
-// شركة مسجلة في إنجلترا وويلز – رقم التسجيل: 13731156";
-        
-//         sendMessage($chat_id, $response);
-//     }
-
+   
     // أمر /kick يقوم بكتم العضو
     if ($text_lower == '/kick') {
         muteMember($chat_id, $user_id);
@@ -247,5 +189,52 @@ foreach ($acceptance_keywords as $keyword) {
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     echo "بوت تلجرام يعمل بنجاح.";
     exit;
+}
+
+
+if ($chat_id && $text) {
+    $text_lower = mb_strtolower($text);
+    if ($text_lower == '/kick') {
+        muteMember($chat_id, $user_id);
+        sendMuteMessageWithButton($chat_id, $user_id, $mention, "أمر إداري /kick");
+    }
+}
+
+if (isset($update['callback_query'])) {
+    $callback = $update['callback_query'];
+    $data = explode(":", $callback['data']);
+    if ($data[0] === 'unmute') {
+        $chat_id_cb = $data[1];
+        $user_id_cb = $data[2];
+        $caller_id = $callback['from']['id'];
+        if (isAdminOrOwner($chat_id_cb, $caller_id)) {
+            $url = "https://api.telegram.org/bot$TOKEN/restrictChatMember";
+            $permissions = [
+                'can_send_messages' => true,
+                'can_send_media_messages' => true,
+                'can_send_polls' => true,
+                'can_send_other_messages' => true,
+                'can_add_web_page_previews' => true,
+                'can_change_info' => false,
+                'can_invite_users' => true,
+                'can_pin_messages' => false
+            ];
+            $post_fields = [
+                'chat_id' => $chat_id_cb,
+                'user_id' => $user_id_cb,
+                'permissions' => json_encode($permissions)
+            ];
+            $ch = curl_init();
+            curl_setopt($ch, CURLOPT_URL, $url);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, $post_fields);
+            curl_exec($ch);
+            curl_close($ch);
+
+            $msg_id = $callback['message']['message_id'];
+            $edit_text = $callback['message']['text'] . "\n\n✅ تم إلغاء الكتم بواسطة المشرف.";
+            file_get_contents("https://api.telegram.org/bot$TOKEN/editMessageText?chat_id=$chat_id_cb&message_id=$msg_id&text=" . urlencode($edit_text));
+        }
+    }
 }
 ?>
