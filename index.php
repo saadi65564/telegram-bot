@@ -122,6 +122,36 @@ foreach ($ads_keywords as $keyword) {
 }
 
   
+function sendMuteMessageWithButton($chat_id, $target_user_id, $mention, $reason) {
+    global $TOKEN;
+
+    $keyboard = [
+        'inline_keyboard' => [
+            [
+                ['text' => '🚨 إلغاء الكتم', 'callback_data' => "unmute:$chat_id:$target_user_id"]
+            ]
+        ]
+    ];
+
+    $text = "🚫 المستخدم $mention\n📌 السبب: $reason\n⏳ العقوبة: كتم لمدة 30 يومًا.";
+
+    $post_fields = [
+        'chat_id' => $chat_id,
+        'text' => $text,
+        'parse_mode' => 'HTML',
+        'reply_markup' => json_encode($keyboard)
+    ];
+
+    $url = "https://api.telegram.org/bot$TOKEN/sendMessage";
+    $ch = curl_init(); 
+    curl_setopt($ch, CURLOPT_URL, $url); 
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1); 
+    curl_setopt($ch, CURLOPT_POSTFIELDS, $post_fields); 
+    curl_exec($ch);
+    curl_close($ch);
+}
+
+
    // ✅ الترحيب بمن ينضم للمجموعة
 if (isset($update['message']['new_chat_members'])) {
     foreach ($update['message']['new_chat_members'] as $new_member) {
