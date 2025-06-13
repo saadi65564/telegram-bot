@@ -37,7 +37,7 @@ function sendMessage($chat_id, $text) {
     curl_close($ch);
 }
 
-// دالة إرسال مع زر إلغاء الكتم
+// دالة إرسال رسالة مع زر إلغاء الكتم
 function sendMuteMessageWithButton($chat_id, $user_id, $mention, $reason) {
     global $TOKEN;
 
@@ -115,7 +115,7 @@ function muteMember($chat_id, $user_id) {
     curl_close($ch);
 }
 
-// الترحيب
+// الترحيب بأعضاء جدد
 if (isset($update['message']['new_chat_members'])) {
     foreach ($update['message']['new_chat_members'] as $new_member) {
         $name = $new_member['first_name'] ?? 'عضو جديد';
@@ -178,7 +178,7 @@ if ($chat_id && $text) {
         }
     }
 
-    // أمر /kick
+    // أمر /kick (يقوم بالكتم + زر إلغاء الكتم)
     if ($text_lower == '/kick') {
         muteMember($chat_id, $user_id);
         sendMuteMessageWithButton($chat_id, $user_id, $mention, "أمر إداري /kick");
