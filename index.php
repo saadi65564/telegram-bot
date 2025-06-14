@@ -41,7 +41,7 @@ function sendMessage($chat_id, $text) {
 function sendMuteMessageWithButton($chat_id, $user_id, $mention, $reason) {
     global $TOKEN;
 
-    $text = "🚫 المستخدم $mention\n📌 السبب: $reason\n⏳ العقوبة: كتم لمدة 30 يومًا.";
+    $text = "🚫 المستخدم $mention : $reason\n العقوبة: مكتوم 🔇.";
 
     $keyboard = [
         'inline_keyboard' => [
@@ -88,7 +88,7 @@ function muteMember($chat_id, $user_id) {
     global $TOKEN;
     $url = "https://api.telegram.org/bot$TOKEN/restrictChatMember";
     $until_date = time() + (30 * 24 * 60 * 60);
-
+    $mute_date = date("Y-m-d H:i", $until_date);
     $permissions = [
         'can_send_messages' => false,
         'can_send_media_messages' => false,
@@ -126,16 +126,29 @@ if (isset($update['message']['new_chat_members'])) {
 }
 
 // فلترة الإعلانات
-$ads_keywords = ['نوفر', 'تواصل معي ', 'للتواصل:', 'شركة استثمار ', 'نحل واجبات','@', 'subscribe', 'http', 'www'];
+// $ads_keywords = ['نوفر', 'تواصل معي ', 'للتواصل:', 'شركة استثمار ', 'نحل واجبات','@', 'subscribe', 'http', 'www'];
+
+$ads_keywords = [
+    'http' => 'نشر رابط مخالف',
+    'www' => 'نشر رابط مخالف',
+    '@' => 'نشر رابط مخالف',
+    'subscribe' => 'نشر إعلان اشتراك',
+    'نوفر' => 'نشر إعلان ',
+    'تواصل معي' => 'نشر كلمة محضورة',
+    'للتواصل:' => 'نشر كلمة محضورة',
+    'شركة استثمار' => 'نشر إعلان ',
+    'نحل واجبات' => 'طلب خدمات ممنوعة',
+];
+
 
 if ($chat_id && $text) {
     $text_lower = mb_strtolower($text);
-    foreach ($ads_keywords as $keyword) {
+    foreach ($ads_keywords as $keyword=>$reason_text) {
         if (strpos($text_lower, $keyword) !== false) {
             if (!isAdminOrOwner($chat_id, $user_id)) {
                 deleteMessage($chat_id, $update['message']['message_id']);
                 muteMember($chat_id, $user_id);
-                sendMuteMessageWithButton($chat_id, $user_id, $mention, "نشر إعلان مخالف");
+                sendMuteMessageWithButton($chat_id, $user_id, $mention, $reason_text);
                 exit;
             }
         }
@@ -229,7 +242,12 @@ if (isset($update['callback_query'])) {
             $msg_id = $callback['message']['message_id'];
             $edit_text = $callback['message']['text'] . "\n\n✅ تم إلغاء الكتم بواسطة المشرف.";
             file_get_contents("https://api.telegram.org/bot$TOKEN/editMessageText?chat_id=$chat_id_cb&message_id=$msg_id&text=" . urlencode($edit_text));
-        }
+        }else {
+    // عرض رسالة منبثقة بأنه لا يملك صلاحية
+    $callback_id = $callback['id'];
+    $message = "🚫 ليس لديك صلاحية لإلغاء الكتم.";
+    file_get_contents("https://api.telegram.org/bot$TOKEN/answerCallbackQuery?callback_query_id=$callback_id&text=" . urlencode($message) . "&show_alert=true");
+}
     }
 }
 ?>
