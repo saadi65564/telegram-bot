@@ -88,7 +88,7 @@ function muteMember($chat_id, $user_id) {
     global $TOKEN;
     $url = "https://api.telegram.org/bot$TOKEN/restrictChatMember";
     $until_date = time() + (30 * 24 * 60 * 60);
-    $mute_date = date("Y-m-d H:i", $until_date);
+    // $mute_date = date("Y-m-d H:i", $until_date);
     $permissions = [
         'can_send_messages' => false,
         'can_send_media_messages' => false,
@@ -243,11 +243,11 @@ if (isset($update['callback_query'])) {
             $edit_text = $callback['message']['text'] . "\n\n✅ تم إلغاء الكتم بواسطة المشرف.";
             file_get_contents("https://api.telegram.org/bot$TOKEN/editMessageText?chat_id=$chat_id_cb&message_id=$msg_id&text=" . urlencode($edit_text));
         }else {
-    // عرض رسالة منبثقة بأنه لا يملك صلاحية
-    $callback_id = $callback['id'];
-    $message = "🚫 ليس لديك صلاحية لإلغاء الكتم.";
-    file_get_contents("https://api.telegram.org/bot$TOKEN/answerCallbackQuery?callback_query_id=$callback_id&text=" . urlencode($message) . "&show_alert=true");
-}
+            // عرض رسالة منبثقة بأنه لا يملك صلاحية
+            $callback_id = $callback['id'];
+            $message = "🚫 ليس لديك صلاحية لإلغاء الكتم.";
+            file_get_contents("https://api.telegram.org/bot$TOKEN/answerCallbackQuery?callback_query_id=$callback_id&text=" . urlencode($message) . "&show_alert=true");
+        }
     }
 }
 ?>
