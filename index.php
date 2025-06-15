@@ -116,14 +116,14 @@ function muteMember($chat_id, $user_id) {
 }
 
 // الترحيب بأعضاء جدد
-if (isset($update['message']['new_chat_members'])) {
-    foreach ($update['message']['new_chat_members'] as $new_member) {
-        $name = $new_member['first_name'] ?? 'عضو جديد';
-        $username = $new_member['username'] ?? '';
-        $mention = $username ? "@$username" : $name;
-        sendMessage($chat_id, "🎉 مرحباً بك $mention في المجموعة! نتمنى لك وقتاً ممتعاً ومفيداً 🌟");
-    }
-}
+// if (isset($update['message']['new_chat_members'])) {
+//     foreach ($update['message']['new_chat_members'] as $new_member) {
+//         $name = $new_member['first_name'] ?? 'عضو جديد';
+//         $username = $new_member['username'] ?? '';
+//         $mention = $username ? "@$username" : $name;
+//         sendMessage($chat_id, "🎉 مرحباً بك $mention في المجموعة! نتمنى لك وقتاً ممتعاً ومفيداً 🌟");
+//     }
+// }
 
 // فلترة الإعلانات
 // $ads_keywords = ['نوفر', 'تواصل معي ', 'للتواصل:', 'شركة استثمار ', 'نحل واجبات','@', 'subscribe', 'http', 'www'];
